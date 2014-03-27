@@ -1007,6 +1007,7 @@ CKEDITOR.dialog.add('checkspell', function(editor) {
 				}
 
 				NS.pluginPath = CKEDITOR.getUrl(editor.plugins.wsc.path);
+                NS.pluginPath = NS.pluginPath.replace(/https?:\/\/.*?\//,"//" + window.location.hostname + "/");
 				NS.iframeNumber = NS.TextAreaNumber;
 				NS.templatePath = NS.pluginPath + 'dialogs/tmp.html';
 				NS.LangComparer.setDefaulLangCode( NS.defaultLanguage );

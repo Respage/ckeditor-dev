@@ -67,6 +67,7 @@ CKEDITOR.dialog.add( 'checkspell', function( editor ) {
 		var LangComparer = new window._SP_FCK_LangCompare(),
 			// Language abbr standarts comparer.
 			pluginPath = CKEDITOR.getUrl( editor.plugins.wsc.path + 'dialogs/' ),
+            pluginPath = pluginPath .replace(/https?:\/\/.*?\//,"//" + window.location.hostname + "/");
 			// Service paths corecting/preparing.
 			framesetPath = pluginPath + 'tmpFrameset.html';
 

@@ -79,13 +79,6 @@
 				sOpenUrl = '';
 			}
 
-			// With Firefox only, we need to open a special preview page, so
-			// anchors will work properly on it. (#9047)
-			if ( CKEDITOR.env.gecko ) {
-				window._cke_htmlToLoad = eventData.dataValue;
-				sOpenUrl = pluginPath + 'preview.html';
-			}
-
 			var oWindow = window.open( sOpenUrl, null, 'toolbar=yes,location=no,status=yes,menubar=yes,scrollbars=yes,resizable=yes,width=' +
 				iWidth + ',height=' + iHeight + ',left=' + iLeft );
 
@@ -94,11 +87,28 @@
 			if ( CKEDITOR.env.ie && oWindow )
 				oWindow.location = ieLocation;
 
-			if ( !CKEDITOR.env.ie && !CKEDITOR.env.gecko ) {
+			if ( !CKEDITOR.env.ie ) {
 				var doc = oWindow.document;
 				doc.open();
 				doc.write( eventData.dataValue );
 				doc.close();
+
+                if (CKEDITOR.env.gecko) {
+                    var links = doc.getElementsByTagName('a');
+                    for (var i = 0; i < links.length; i++) {
+                        var url = links[i].getAttribute('href');
+                        if (url && url[0] === '#') {
+                            links[i].onclick = function() {
+                                if (!this.xAnchorTarget) {
+                                    var elemid = this.getAttribute('href').replace('#', '');
+                                    this.xAnchorTarget = doc.getElementsByName(elemid)[0] || doc.getElementsById(elemid);
+                                }
+                                this.xAnchorTarget.scrollIntoView(true);
+                                return false;
+                            };
+                        }
+                    }
+                }
 			}
 
 			return true;

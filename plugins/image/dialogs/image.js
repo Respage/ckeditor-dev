@@ -1033,6 +1033,35 @@
 					}
 					]
 				},
+                {
+                    id : 'Upload2',
+                    hidden : false,
+                    filebrowser : 'uploadButton2',
+                    label : 'Upload Flyer',
+                    elements :
+                        [
+                            {
+                                type : 'file',
+                                id : 'upload',
+                                label : editor.lang.image.btnUpload,
+                                style: 'height:40px',
+                                size : 38
+                            },
+                            {
+                                type : 'fileButton',
+                                id : 'uploadButton2',
+                                filebrowser : {
+                                    action : 'QuickUpload',
+                                    target: 'info:txtUrl',
+                                    params: {
+                                        'is_flyer': '1'
+                                    }
+                                },
+                                label : editor.lang.image.btnUpload,
+                                'for' : [ 'Upload2', 'upload']
+                            }
+                        ]
+                },
 					{
 					id: 'advanced',
 					label: editor.lang.common.advancedTab,

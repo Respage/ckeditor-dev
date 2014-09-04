@@ -79,6 +79,13 @@
 				sOpenUrl = '';
 			}
 
+			// With Firefox only, we need to open a special preview page, so
+			// anchors will work properly on it. (#9047)
+			if ( CKEDITOR.env.gecko ) {
+				window._cke_htmlToLoad = eventData.dataValue;
+				sOpenUrl = CKEDITOR.getUrl( pluginPath + 'preview.html' );
+			}
+
 			var oWindow = window.open( sOpenUrl, null, 'toolbar=yes,location=no,status=yes,menubar=yes,scrollbars=yes,resizable=yes,width=' +
 				iWidth + ',height=' + iHeight + ',left=' + iLeft );
 

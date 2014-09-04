@@ -81,9 +81,11 @@ CKEDITOR.lang[ 'ms' ] = {
 		alignLeft: 'Kiri',
 		alignRight: 'Kanan',
 		alignCenter: 'Tengah',
+		alignJustify: 'Jajaran Blok',
 		alignTop: 'Atas',
 		alignMiddle: 'Pertengahan',
 		alignBottom: 'Bawah',
+		alignNone: 'None', // MISSING
 		invalidValue	: 'Invalid value.', // MISSING
 		invalidHeight: 'Height must be a number.', // MISSING
 		invalidWidth: 'Width must be a number.', // MISSING

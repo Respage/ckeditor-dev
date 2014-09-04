@@ -81,9 +81,11 @@ CKEDITOR.lang[ 'gu' ] = {
 		alignLeft: 'ડાબી બાજુ ગોઠવવું',
 		alignRight: 'જમણી',
 		alignCenter: 'મધ્ય સેન્ટર',
+		alignJustify: 'બ્લૉક, અંતરાય જસ્ટિફાઇ',
 		alignTop: 'ઉપર',
 		alignMiddle: 'વચ્ચે',
 		alignBottom: 'નીચે',
+		alignNone: 'None', // MISSING
 		invalidValue	: 'Invalid value.', // MISSING
 		invalidHeight: 'ઉંચાઈ એક આંકડો હોવો જોઈએ.',
 		invalidWidth: 'પોહળ ઈ એક આંકડો હોવો જોઈએ.',

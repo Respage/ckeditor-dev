@@ -81,9 +81,11 @@ CKEDITOR.lang[ 'ka' ] = {
 		alignLeft: 'მარცხენა',
 		alignRight: 'მარჯვენა',
 		alignCenter: 'შუა',
+		alignJustify: '両端揃え',
 		alignTop: 'ზემოთა',
 		alignMiddle: 'შუა',
 		alignBottom: 'ქვემოთა',
+		alignNone: 'None', // MISSING
 		invalidValue	: 'Invalid value.', // MISSING
 		invalidHeight: 'სიმაღლე რიცხვით უნდა იყოს წარმოდგენილი.',
 		invalidWidth: 'სიგანე რიცხვით უნდა იყოს წარმოდგენილი.',

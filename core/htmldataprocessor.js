@@ -307,18 +307,15 @@
 		function blockFilter( isOutput, fillEmptyBlock ) {
 
 			return function( block ) {
-
-				// DO NOT apply the filer if it's a fragment node.
+				// DO NOT apply the filler if it's a fragment node.
 				if ( block.type == CKEDITOR.NODE_DOCUMENT_FRAGMENT )
 					return;
 
 				cleanBogus( block );
 
-				// [Opera] it's mandatory for the filler to present inside of empty block when in WYSIWYG.
-				if ( ( ( CKEDITOR.env.opera && !isOutput ) ||
-						( typeof fillEmptyBlock == 'function' ? fillEmptyBlock( block ) !== false : fillEmptyBlock ) ) &&
-						 isEmptyBlockNeedFiller( block ) )
-				{
+				var shouldFillBlock = typeof fillEmptyBlock == 'function' ? fillEmptyBlock( block ) : fillEmptyBlock;
+
+				if ( shouldFillBlock !== false && isEmptyBlockNeedFiller( block ) ) {
 					block.add( createFiller( isOutput ) );
 				}
 			};
@@ -448,21 +445,21 @@
 			return !last || block.name == 'form' && last.name == 'input' ;
 		}
 
-		var rules = { elements: {} };
-		var isOutput = type == 'html';
+		var rules = { elements: {} },
+			isOutput = type == 'html',
+			textBlockTags = CKEDITOR.tools.extend( {}, blockLikeTags );
 
 		// Build the list of text blocks.
-		var textBlockTags = CKEDITOR.tools.extend( {}, blockLikeTags );
 		for ( var i in textBlockTags ) {
 			if ( !( '#' in dtd[ i ] ) )
 				delete textBlockTags[ i ];
 		}
 
 		for ( i in textBlockTags )
-			rules.elements[ i ] = blockFilter( isOutput, editor.config.fillEmptyBlocks !== false );
+			rules.elements[ i ] = blockFilter( isOutput, editor.config.fillEmptyBlocks );
 
-		// Editable element is to be checked separately.
-		rules.root = blockFilter( isOutput );
+		// Editable element has to be checked separately.
+		rules.root = blockFilter( isOutput, false );
 		rules.elements.br = brFilter( isOutput );
 		return rules;
 	}
@@ -816,7 +813,7 @@
 	}
 
 	function protectPreFormatted( html ) {
-		return CKEDITOR.env.opera ? html : html.replace( /(<pre\b[^>]*>)(\r\n|\n)/g, '$1$2$2' );
+		return html.replace( /(<pre\b[^>]*>)(\r\n|\n)/g, '$1$2$2' );
 	}
 
 	function protectRealComments( html ) {
@@ -864,7 +861,10 @@
 			( /<script[\s\S]*?<\/script>/gi ),
 
 			// <noscript> tags (get lost in IE and messed up in FF).
-			/<noscript[\s\S]*?<\/noscript>/gi
+			/<noscript[\s\S]*?<\/noscript>/gi,
+
+			// Avoid meta tags being stripped (#8117).
+			/<meta[\s\S]*?\/?>/gi
 		].concat( protectRegexes );
 
 		// First of any other protection, we must protect all comments
@@ -895,13 +895,22 @@
 
 		// Different protection pattern is used for those that
 		// live in attributes to avoid from being HTML encoded.
-		// Why so serious? See #9205, #8216, #7805.
-		return data.replace( /<\w([^'">]+|'[^']*'|"[^"]*")+>/g, function( match ) {
+		// Why so serious? See #9205, #8216, #7805, #11754, #11846.
+		data = data.replace( /<\w+(?:\s+(?:(?:[^\s=>]+\s*=\s*(?:[^'"\s>]+|'[^']*'|"[^"]*"))|[^\s=>]+))+\s*>/g, function( match ) {
 			return match.replace( /<!--\{cke_protected\}([^>]*)-->/g, function( match, data ) {
 				store[ store.id ] = decodeURIComponent( data );
 				return '{cke_protected_' + ( store.id++ ) + '}';
 			} );
 		} );
+
+		// This RegExp searches for innerText in all the title/iframe/textarea elements.
+		// This is because browser doesn't allow HTML in these elements, that's why we can't
+		// nest comments in there. (#11223)
+		data = data.replace( /<(title|iframe|textarea)([^>]*)>([\s\S]*?)<\/\1>/g, function( match, tagName, tagAttributes, innerText ) {
+			return '<' + tagName + tagAttributes + '>' + unprotectSource( unprotectRealComments( innerText ), editor ) + '</' + tagName + '>';
+		} );
+
+		return data;
 	}
 } )();
 
@@ -921,7 +930,7 @@
  *		};
  *
  * @since 3.5
- * @cfg {Boolean} [fillEmptyBlocks=true]
+ * @cfg {Boolean/Function} [fillEmptyBlocks=true]
  * @member CKEDITOR.config
  */
 
@@ -999,4 +1008,3 @@
  * @param {Boolean} data.filter See {@link CKEDITOR.htmlDataProcessor#toDataFormat} The `filter` argument.
  * @param {Boolean} data.enterMode See {@link CKEDITOR.htmlDataProcessor#toDataFormat} The `enterMode` argument.
  */
-

@@ -81,9 +81,11 @@ CKEDITOR.lang[ 'sk' ] = {
 		alignLeft: 'Vľavo',
 		alignRight: 'Vpravo',
 		alignCenter: 'Na stred',
+		alignJustify: 'Zarovnať do bloku',
 		alignTop: 'Nahor',
 		alignMiddle: 'Na stred',
 		alignBottom: 'Dole',
+		alignNone: 'None', // MISSING
 		invalidValue	: 'Neplatná hodnota.',
 		invalidHeight: 'Výška musí byť číslo.',
 		invalidWidth: 'Šírka musí byť číslo.',

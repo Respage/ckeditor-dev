@@ -4,6 +4,6 @@
  */
 
 CKEDITOR.plugins.setLang( 'language', 'fa', {
-	button: 'تنظیم زبان',
+	button: 'تعیین زبان',
 	remove: 'حذف زبان'
 } );

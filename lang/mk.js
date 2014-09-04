@@ -80,9 +80,11 @@ CKEDITOR.lang[ 'mk' ] = {
 		alignLeft: 'Left', // MISSING
 		alignRight: 'Right', // MISSING
 		alignCenter: 'Center', // MISSING
+		alignJustify: 'Justify', // MISSING
 		alignTop: 'Top', // MISSING
 		alignMiddle: 'Middle', // MISSING
 		alignBottom: 'Bottom', // MISSING
+		alignNone: 'None', // MISSING
 		invalidValue	: 'Invalid value.', // MISSING
 		invalidHeight: 'Height must be a number.', // MISSING
 		invalidWidth: 'Width must be a number.', // MISSING

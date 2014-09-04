@@ -81,9 +81,11 @@ CKEDITOR.lang[ 'es' ] = {
 		alignLeft: 'Izquierda',
 		alignRight: 'Derecha',
 		alignCenter: 'Centrado',
+		alignJustify: 'Justificado',
 		alignTop: 'Tope',
 		alignMiddle: 'Centro',
 		alignBottom: 'Pie',
+		alignNone: 'None', // MISSING
 		invalidValue	: 'Valor no válido',
 		invalidHeight: 'Altura debe ser un número.',
 		invalidWidth: 'Anchura debe ser un número.',

@@ -81,9 +81,11 @@ CKEDITOR.lang[ 'lt' ] = {
 		alignLeft: 'Kairę',
 		alignRight: 'Dešinę',
 		alignCenter: 'Centrą',
+		alignJustify: 'Lygiuoti abi puses',
 		alignTop: 'Viršūnę',
 		alignMiddle: 'Vidurį',
 		alignBottom: 'Apačią',
+		alignNone: 'None', // MISSING
 		invalidValue	: 'Neteisinga reikšmė.',
 		invalidHeight: 'Aukštis turi būti nurodytas skaičiais.',
 		invalidWidth: 'Plotis turi būti nurodytas skaičiais.',

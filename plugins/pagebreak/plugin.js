@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @license Copyright (c) 2003-2014, CKSource - Frederico Knabben. All rights reserved.
  * For licensing, see LICENSE.md or http://ckeditor.com/license
  */
@@ -13,7 +13,7 @@
 	// Register a plugin named "pagebreak".
 	CKEDITOR.plugins.add( 'pagebreak', {
 		requires: 'fakeobjects',
-		lang: 'af,ar,bg,bn,bs,ca,cs,cy,da,de,el,en,en-au,en-ca,en-gb,eo,es,et,eu,fa,fi,fo,fr,fr-ca,gl,gu,he,hi,hr,hu,id,is,it,ja,ka,km,ko,ku,lt,lv,mk,mn,ms,nb,nl,no,pl,pt,pt-br,ro,ru,si,sk,sl,sq,sr,sr-latn,sv,th,tr,ug,uk,vi,zh,zh-cn', // %REMOVE_LINE_CORE%
+		lang: 'af,ar,bg,bn,bs,ca,cs,cy,da,de,el,en,en-au,en-ca,en-gb,eo,es,et,eu,fa,fi,fo,fr,fr-ca,gl,gu,he,hi,hr,hu,id,is,it,ja,ka,km,ko,ku,lt,lv,mk,mn,ms,nb,nl,no,pl,pt,pt-br,ro,ru,si,sk,sl,sq,sr,sr-latn,sv,th,tr,tt,ug,uk,vi,zh,zh-cn', // %REMOVE_LINE_CORE%
 		icons: 'pagebreak,pagebreak-rtl', // %REMOVE_LINE_CORE%
 		hidpi: true, // %REMOVE_LINE_CORE%
 		onLoad: function() {
@@ -46,8 +46,8 @@
 				toolbar: 'insert,70'
 			} );
 
-			// Opera and webkit based browsers needs help to select the page-break.
-			( CKEDITOR.env.opera || CKEDITOR.env.webkit ) && editor.on( 'contentDom', function() {
+			// Webkit based browsers needs help to select the page-break.
+			CKEDITOR.env.webkit && editor.on( 'contentDom', function() {
 				editor.document.on( 'click', function( evt ) {
 					var target = evt.data.getTarget();
 					if ( target.is( 'div' ) && target.hasClass( 'cke_pagebreak' ) )

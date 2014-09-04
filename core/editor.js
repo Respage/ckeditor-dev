@@ -443,10 +443,6 @@
 			 */
 			editor.title = typeof configTitle == 'string' || configTitle === false ? configTitle : [ editor.lang.editor, editor.name ].join( ', ' );
 
-			// We're not able to support RTL in Firefox 2 at this time.
-			if ( CKEDITOR.env.gecko && CKEDITOR.env.version < 10900 && editor.lang.dir == 'rtl' )
-				editor.lang.dir = 'ltr';
-
 			if ( !editor.config.contentsLangDirection ) {
 				// Fallback to either the editable element direction or editor UI direction depending on creators.
 				editor.config.contentsLangDirection = editor.elementMode == CKEDITOR.ELEMENT_MODE_INLINE ? editor.element.getDirection( 1 ) : editor.lang.dir;
@@ -930,24 +926,51 @@
 		 *
 		 *		CKEDITOR.instances.editor1.setData( '<p>This is the editor data.</p>' );
 		 *
-		 *		CKEDITOR.instances.editor1.setData( '<p>Some other editor data.</p>', function() {
-		 *			this.checkDirty(); // true
-		 *		});
+		 *		CKEDITOR.instances.editor1.setData( '<p>Some other editor data.</p>', {
+		 *			callback: function() {
+		 *				this.checkDirty(); // true
+		 *			}
+		 *		} );
 		 *
-		 * @param {String} data HTML code to replace the curent content in the editor.
-		 * @param {Function} callback Function to be called after the `setData` is completed.
-		 * @param {Boolean} internal Whether to suppress any event firing when copying data internally inside the editor.
+		 * Note: In **CKEditor 4.4.2** the signature of this method has changed. All arguments
+		 * except `data` were wrapped into the `options` object. However, backward compatibility
+		 * was preserved and it is still possible to use the `data, callback, internal` arguments.
+		 *
+		 *
+		 * @param {String} data HTML code to replace current editor content.
+		 * @param {Object} [options]
+		 * @param {Boolean} [options.internal=false] Whether to suppress any event firing when copying data internally inside the editor.
+		 * @param {Function} [options.callback] Function to be called after `setData` is completed (on {@link #dataReady}).
+		 * @param {Boolean} [options.noSnapshot=false] If set to `true`, it will prevent recording an undo snapshot.
+		 * Introduced in CKEditor 4.4.2.
 		 */
-		setData: function( data, callback, internal ) {
-			if ( callback ) {
-				this.on( 'dataReady', function( evt ) {
-					evt.removeListener();
-					callback.call( evt.editor );
+		setData: function( data, options, internal ) {
+			var fireSnapshot = true,
+				// Backward compatibility.
+				callback = options,
+				eventData;
+
+			if ( options && typeof options == 'object' ) {
+				internal = options.internal;
+				callback = options.callback;
+				fireSnapshot = !options.noSnapshot;
+			}
+
+			if ( !internal && fireSnapshot )
+				this.fire( 'saveSnapshot' );
+
+			if ( callback || !internal ) {
+				this.once( 'dataReady', function( evt ) {
+					if ( !internal && fireSnapshot )
+						this.fire( 'saveSnapshot' );
+
+					if ( callback )
+						callback.call( evt.editor );
 				} );
 			}
 
 			// Fire "setData" so data manipulation may happen.
-			var eventData = { dataValue: data };
+			eventData = { dataValue: data };
 			!internal && this.fire( 'setData', eventData );
 
 			this._.data = eventData.dataValue;

@@ -81,9 +81,11 @@ CKEDITOR.lang[ 'hr' ] = {
 		alignLeft: 'Lijevo',
 		alignRight: 'Desno',
 		alignCenter: 'Središnje',
+		alignJustify: 'Blok poravnanje',
 		alignTop: 'Vrh',
 		alignMiddle: 'Sredina',
 		alignBottom: 'Dolje',
+		alignNone: 'None', // MISSING
 		invalidValue	: 'Neispravna vrijednost.',
 		invalidHeight: 'Visina mora biti broj.',
 		invalidWidth: 'Širina mora biti broj.',

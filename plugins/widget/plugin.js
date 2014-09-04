@@ -14,7 +14,7 @@
 	var DRAG_HANDLER_SIZE = 15;
 
 	CKEDITOR.plugins.add( 'widget', {
-		lang: 'ar,ca,cs,cy,de,el,en,en-gb,es,fa,fi,fr,gl,hr,hu,ja,km,ko,nb,nl,no,pl,pt,pt-br,ru,sl,sv,uk,zh,zh-cn', // %REMOVE_LINE_CORE%
+		lang: 'ar,ca,cs,cy,de,el,en,en-gb,eo,es,fa,fi,fr,gl,he,hr,hu,it,ja,km,ko,nb,nl,no,pl,pt,pt-br,ru,sl,sv,tt,uk,vi,zh,zh-cn', // %REMOVE_LINE_CORE%
 		requires: 'lineutils,clipboard',
 		onLoad: function() {
 			CKEDITOR.addCss(
@@ -218,10 +218,6 @@
 			addWidgetCommand( this.editor, widgetDef );
 			addWidgetProcessors( this, widgetDef );
 
-			// Register widget automatically if it does not have a button.
-			if ( !widgetDef.button )
-				this.editor.addFeature( widgetDef );
-
 			this.registered[ name ] = widgetDef;
 
 			return widgetDef;
@@ -419,20 +415,31 @@
 		 * @param {Boolean} [checkWrapperOnly] If set to `true`, the method will not check wrappers' descendants.
 		 * @returns {CKEDITOR.plugins.widget} The widget instance or `null`.
 		 */
-		getByElement: function( element, checkWrapperOnly ) {
-			if ( !element )
-				return null;
-
-			var wrapper;
-
-			for ( var id in this.instances ) {
-				wrapper = this.instances[ id ].wrapper;
-				if ( wrapper.equals( element ) || ( !checkWrapperOnly && wrapper.contains( element ) ) )
-					return this.instances[ id ];
+		getByElement: ( function() {
+			var validWrapperElements = { div: 1, span: 1 };
+			function getWidgetId( element ) {
+				return element.is( validWrapperElements ) && element.data( 'cke-widget-id' );
 			}
 
-			return null;
-		},
+			return function( element, checkWrapperOnly ) {
+				if ( !element )
+					return null;
+
+				var id = getWidgetId( element );
+
+				// There's no need to check element parents if element is a wrapper.
+				if ( !checkWrapperOnly && !id ) {
+					var limit = this.editor.editable();
+
+					// Try to find a closest ascendant which is a widget wrapper.
+					do {
+						element = element.getParent();
+					} while ( element && !element.equals( limit ) && !( id = getWidgetId( element ) ) );
+				}
+
+				return this.instances[ id ] || null;
+			};
+		} )(),
 
 		/**
 		 * Initializes a widget on a given element if the widget has not been initialized on it yet.
@@ -489,6 +496,7 @@
 		 * @param {CKEDITOR.dom.element} [container=editor.editable()] The container which will be checked for not
 		 * initialized widgets. Defaults to editor's {@link CKEDITOR.editor#editable editable} element.
 		 * @returns {CKEDITOR.plugins.widget[]} Array of widget instances which have been initialized.
+		 * Note: Only first-level widgets are returned &mdash; without nested widgets.
 		 */
 		initOnAll: function( container ) {
 			var newWidgets = ( container || this.editor.editable() ).find( '.cke_widget_new' ),
@@ -502,6 +510,35 @@
 			}
 
 			return newInstances;
+		},
+
+		/**
+		 * Parses element classes string and returns an object
+		 * whose keys contain class names. Skips all `cke_*` classes.
+		 *
+		 * This method is used by the {@link CKEDITOR.plugins.widget#getClasses} method and
+		 * may be used when overriding that method.
+		 *
+		 * @since 4.4
+		 * @param {String} classes String (value of `class` attribute).
+		 * @returns {Object} Object containing classes or `null` if no classes found.
+		 */
+		parseElementClasses: function( classes ) {
+			if ( !classes )
+				return null;
+
+			classes = CKEDITOR.tools.trim( classes ).split( /\s+/ );
+
+			var cl,
+				obj = {},
+				hasClasses = 0;
+
+			while ( ( cl = classes.pop() ) ) {
+				if ( cl.indexOf( 'cke_' ) == -1 )
+					obj[ cl ] = hasClasses = 1;
+			}
+
+			return hasClasses ? obj : null;
 		},
 
 		/**
@@ -866,6 +903,77 @@
 
 	Widget.prototype = {
 		/**
+		 * Adds a class to the widget element. This method is used by
+		 * the {@link #applyStyle} method and should be overriden by widgets
+		 * which should handle classes differently (e.g. add them to other elements).
+		 *
+		 * **Note**: This method should not be used directly. Use the {@link #setData} method to
+		 * set the `classes` property. Read more in the {@link #setData} documentation.
+		 *
+		 * See also: {@link #removeClass}, {@link #hasClass}, {@link #getClasses}.
+		 *
+		 * @since 4.4
+		 * @param {String} className The class name to be added.
+		 */
+		addClass: function( className ) {
+			this.element.addClass( className );
+		},
+
+		/**
+		 * Applies the specified style to the widget. It is highly recommended to use the
+		 * {@link CKEDITOR.editor#applyStyle} or {@link CKEDITOR.style#apply} methods instead of
+		 * using this method directly, because unlike editor's and style's methods, this one
+		 * does not perform any checks.
+		 *
+		 * By default this method handles only classes defined in the style. It clones existing
+		 * classes which are stored in the {@link #property-data widget data}'s `classes` property,
+		 * adds new classes, and calls the {@link #setData} method if at least one new class was added.
+		 * Then, using the {@link #event-data} event listener widget applies modifications passing
+		 * new classes to the {@link #addClass} method.
+		 *
+		 * If you need to handle classes differently than in the default way, you can override the
+		 * {@link #addClass} and related methods. You can also handle other style properties than `classes`
+		 * by overriding this method.
+		 *
+		 * See also: {@link #checkStyleActive}, {@link #removeStyle}.
+		 *
+		 * @since 4.4
+		 * @param {CKEDITOR.style} style The custom widget style to be applied.
+		 */
+		applyStyle: function( style ) {
+			applyRemoveStyle( this, style, 1 );
+		},
+
+		/**
+		 * Checks if the specified style is applied to this widget. It is highly recommended to use the
+		 * {@link CKEDITOR.style#checkActive} method instead of using this method directly,
+		 * because unlike style's method, this one does not perform any checks.
+		 *
+		 * By default this method handles only classes defined in the style and passes
+		 * them to the {@link #hasClass} method. You can override these methods to handle classes
+		 * differently or to handle more of the style properties.
+		 *
+		 * See also: {@link #applyStyle}, {@link #removeStyle}.
+		 *
+		 * @since 4.4
+		 * @param {CKEDITOR.style} style The custom widget style to be checked.
+		 * @returns {Boolean} Whether the style is applied to this widget.
+		 */
+		checkStyleActive: function( style ) {
+			var classes = getStyleClasses( style ),
+				cl;
+
+			if ( !classes )
+				return false;
+
+			while ( ( cl = classes.pop() ) ) {
+				if ( !this.hasClass( cl ) )
+					return false;
+			}
+			return true;
+		},
+
+		/**
 		 * Destroys this widget instance.
 		 *
 		 * Use {@link CKEDITOR.plugins.widget.repository#destroy} when possible instead of this method.
@@ -922,10 +1030,12 @@
 		 * Starts widget editing.
 		 *
 		 * This method fires the {@link CKEDITOR.plugins.widget#event-edit} event
-		 * which may be cancelled in order to prevent it from opening a dialog window.
+		 * which may be canceled in order to prevent it from opening a dialog window.
 		 *
 		 * The dialog window name is obtained from the event's data `dialog` property or
 		 * from {@link CKEDITOR.plugins.widget.definition#dialog}.
+		 *
+		 * @returns {Boolean} Returns `true` if a dialog window was opened.
 		 */
 		edit: function() {
 			var evtData = { dialog: this.dialog },
@@ -933,7 +1043,7 @@
 
 			// Edit event was blocked, but there's no dialog to be automatically opened.
 			if ( this.fire( 'edit', evtData ) === false || !evtData.dialog )
-				return;
+				return false;
 
 			this.editor.openDialog( evtData.dialog, function( dialog ) {
 				var showListener,
@@ -975,6 +1085,39 @@
 					okListener.removeListener();
 				} );
 			} );
+
+			return true;
+		},
+
+		/**
+		 * Returns widget element classes parsed to an object. This method
+		 * is used to populate the `classes` property of widget's {@link #property-data}.
+		 *
+		 * This method reuses {@link CKEDITOR.plugins.widget.repository#parseElementClasses}.
+		 * It should be overriden if a widget should handle classes differently (e.g. on other elements).
+		 *
+		 * See also: {@link #removeClass}, {@link #addClass}, {@link #hasClass}.
+		 *
+		 * @since 4.4
+		 * @returns {Object}
+		 */
+		getClasses: function() {
+			return this.repository.parseElementClasses( this.element.getAttribute( 'class' ) );
+		},
+
+		/**
+		 * Checks if the widget element has specified class. This method is used by
+		 * the {@link #checkStyleActive} method and should be overriden by widgets
+		 * which should handle classes differently (e.g. on other elements).
+		 *
+		 * See also: {@link #removeClass}, {@link #addClass}, {@link #getClasses}.
+		 *
+		 * @since 4.4
+		 * @param {String} className The class to be checked.
+		 * @param {Boolean} Whether a widget has specified class.
+		 */
+		hasClass: function( className ) {
+			return this.element.hasClass( className );
 		},
 
 		/**
@@ -1057,11 +1200,50 @@
 
 			// Fake the selection before focusing editor, to avoid unpreventable viewports scrolling
 			// on Webkit/Blink/IE which is done because there's no selection or selection was somewhere else than widget.
-			if ( sel )
+			if ( sel ) {
+				var isDirty = this.editor.checkDirty();
+
 				sel.fake( this.wrapper );
+
+				!isDirty && this.editor.resetDirty();
+			}
 
 			// Always focus editor (not only when focusManger.hasFocus is false) (because of #10483).
 			this.editor.focus();
+		},
+
+		/**
+		 * Removes a class from the widget element. This method is used by
+		 * the {@link #removeStyle} method and should be overriden by widgets
+		 * which should handle classes differently (e.g. on other elements).
+		 *
+		 * **Note**: This method should not be used directly. Use the {@link #setData} method to
+		 * set the `classes` property. Read more in the {@link #setData} documentation.
+		 *
+		 * See also: {@link #hasClass}, {@link #addClass}.
+		 *
+		 * @since 4.4
+		 * @param {String} className The class to be removed.
+		 */
+		removeClass: function( className ) {
+			this.element.removeClass( className );
+		},
+
+		/**
+		 * Removes the specified style from the widget. It is highly recommended to use the
+		 * {@link CKEDITOR.editor#removeStyle} or {@link CKEDITOR.style#remove} methods instead of
+		 * using this method directly, because unlike editor's and style's methods, this one
+		 * does not perform any checks.
+		 *
+		 * Read more about how applying/removing styles works in the {@link #applyStyle} method documentation.
+		 *
+		 * See also {@link #checkStyleActive}, {@link #applyStyle}, {@link #getClasses}.
+		 *
+		 * @since 4.4
+		 * @param {CKEDITOR.style} style The custom widget style to be removed.
+		 */
+		removeStyle: function( style ) {
+			applyRemoveStyle( this, style, 0 );
 		},
 
 		/**
@@ -1078,6 +1260,22 @@
 		 * Set values are stored in {@link #element}'s attribute (`data-cke-widget-data`),
 		 * in a JSON string, therefore {@link #property-data} should contain
 		 * only serializable data.
+		 *
+		 * **Note:** A special data property, `classes`, exists. It contains an object with
+		 * classes which were returned by the {@link #getClasses} method during the widget initialization.
+		 * This property is then used by the {@link #applyStyle} and {@link #removeStyle} methods.
+		 * When it is changed (the reference to object must be changed!), the widget updates its classes by
+		 * using the {@link #addClass} and {@link #removeClass} methods.
+		 *
+		 *		// Adding a new class.
+		 *		var classes = CKEDITOR.tools.clone( widget.data.classes );
+		 *		classes.newClass = 1;
+		 *		widget.setData( 'classes', classes );
+		 *
+		 *		// Removing a class.
+		 *		var classes = CKEDITOR.tools.clone( widget.data.classes );
+		 *		delete classes.newClass;
+		 *		widget.setData( 'classes', classes );
 		 *
 		 * @param {String/Object} keyOrData
 		 * @param {Object} value
@@ -1239,7 +1437,7 @@
 
 	/**
 	 * An event fired when a dialog window for widget editing is opened.
-	 * This event can be cancelled in order to handle the editing dialog in a custom manner.
+	 * This event can be canceled in order to handle the editing dialog in a custom manner.
 	 *
 	 * @event dialog
 	 * @param {CKEDITOR.dialog} data The opened dialog window instance.
@@ -1248,7 +1446,7 @@
 	/**
 	 * An event fired when a key is pressed on a focused widget.
 	 * This event is forwarded from the {@link CKEDITOR.editor#key} event and
-	 * has the ability to block editor keystrokes if it is cancelled.
+	 * has the ability to block editor keystrokes if it is canceled.
 	 *
 	 * @event key
 	 * @param data
@@ -1258,16 +1456,29 @@
 	/**
 	 * An event fired when a widget is double clicked.
 	 *
+	 * **Note:** If a default editing action is executed on double click (i.e. a widget has a
+	 * {@link CKEDITOR.plugins.widget.definition#dialog dialog} defined and the {@link #event-doubleclick} event was not
+	 * canceled), this event will be automatically canceled, so a listener added with the default priority (10)
+	 * will not be executed. Use a listener with low priority (e.g. 5) to be sure that it will be executed.
+	 *
+	 *		widget.on( 'doubleclick', function( evt ) {
+	 *			console.log( 'widget#doubleclick' );
+	 *		}, null, null, 5 );
+	 *
+	 * If your widget handles double click in a special way (so the default editing action is not executed),
+	 * make sure you cancel this event, because otherwise it will be propagated to {@link CKEDITOR.editor#doubleclick}
+	 * and another feature may step in (e.g. a Link dialog window may be opened if your widget was inside a link).
+	 *
 	 * @event doubleclick
 	 * @param data
-	 * @param {CKEDITOR.dom.element} data.element The double clicked element.
+	 * @param {CKEDITOR.dom.element} data.element The double-clicked element.
 	 */
 
 	/**
 	 * An event fired when the context menu is opened for a widget.
 	 *
 	 * @event contextMenu
-	 * @param data The object contaning context menu options to be added
+	 * @param data The object containing context menu options to be added
 	 * for this widget. See {@link CKEDITOR.plugins.contextMenu#addListener}.
 	 */
 
@@ -1323,6 +1534,8 @@
 				enterMode: this.enterMode
 			} );
 			this.setHtml( data );
+
+			this.editor.widgets.initOnAll( this );
 		},
 
 		/**
@@ -1510,9 +1723,13 @@
 		widgetsRepo.focused = null;
 
 		if ( widget.isInited() ) {
+			var isDirty = widget.editor.checkDirty();
+
 			// Widget could be destroyed in the meantime - e.g. data could be set.
 			widgetsRepo.fire( 'widgetBlurred', { widget: widget } );
 			widget.setFocused( false );
+
+			!isDirty && widget.editor.resetDirty();
 		}
 	}
 
@@ -1691,7 +1908,7 @@
 								element = upcasted;
 
 							// Set initial data attr with data from upcast method.
-							element.attributes[ 'data-cke-widget-data' ] = JSON.stringify( data );
+							element.attributes[ 'data-cke-widget-data' ] = encodeURIComponent( JSON.stringify( data ) );
 							element.attributes[ 'data-cke-widget-upcasted' ] = 1;
 
 							toBeWrapped.push( [ element, upcast[ 1 ] ] );
@@ -1824,6 +2041,11 @@
 	// @param {CKEDITOR.dom.element}
 	function isDomDragHandler( element ) {
 		return element.type == CKEDITOR.NODE_ELEMENT && element.hasAttribute( 'data-cke-widget-drag-handler' );
+	}
+
+	// @param {CKEDITOR.dom.element}
+	function isDomDragHandlerContainer( element ) {
+		return element.type == CKEDITOR.NODE_ELEMENT && element.hasClass( 'cke_widget_drag_handler_container' );
 	}
 
 	function finalizeNativeDrop( editor, sourceWidget, range ) {
@@ -2435,7 +2657,7 @@
 
 			commit: function() {
 				var focusedChanged = widgetsRepo.focused !== focused,
-					widget;
+					widget, isDirty;
 
 				widgetsRepo.editor.fire( 'lockSnapshot' );
 
@@ -2445,14 +2667,23 @@
 				while ( ( widget = toBeDeselected.pop() ) ) {
 					currentlySelected.splice( CKEDITOR.tools.indexOf( currentlySelected, widget ), 1 );
 					// Widget could be destroyed in the meantime - e.g. data could be set.
-					if ( widget.isInited() )
+					if ( widget.isInited() ) {
+						isDirty = widget.editor.checkDirty();
+
 						widget.setSelected( false );
+
+						!isDirty && widget.editor.resetDirty();
+					}
 				}
 
 				if ( focusedChanged && focused ) {
+					isDirty = widgetsRepo.editor.checkDirty();
+
 					widgetsRepo.focused = focused;
 					widgetsRepo.fire( 'widgetFocused', { widget: focused } );
 					focused.setFocused( true );
+
+					!isDirty && widgetsRepo.editor.resetDirty();
 				}
 
 				while ( ( widget = toBeSelected.pop() ) ) {
@@ -2470,9 +2701,39 @@
 	// WIDGET helpers ---------------------------------------------------------
 	//
 
-	var transparentImageData = 'data:image/gif;base64,R0lGODlhAQABAPABAP///wAAACH5BAEKAAAALAAAAAABAAEAAAICRAEAOw%3D%3D',
-		// LEFT, RIGHT, UP, DOWN, DEL, BACKSPACE - unblock default fake sel handlers.
-		keystrokesNotBlockedByWidget = { 37: 1, 38: 1, 39: 1, 40: 1, 8: 1, 46: 1 };
+	// LEFT, RIGHT, UP, DOWN, DEL, BACKSPACE - unblock default fake sel handlers.
+	var keystrokesNotBlockedByWidget = { 37: 1, 38: 1, 39: 1, 40: 1, 8: 1, 46: 1 };
+
+	// Applies or removes style's classes from widget.
+	// @param {CKEDITOR.style} style Custom widget style.
+	// @param {Boolean} apply Whether to apply or remove style.
+	function applyRemoveStyle( widget, style, apply ) {
+		var changed = 0,
+			classes = getStyleClasses( style ),
+			updatedClasses = widget.data.classes || {},
+			cl;
+
+		// Ee... Something is wrong with this style.
+		if ( !classes )
+			return;
+
+		// Clone, because we need to break reference.
+		updatedClasses = CKEDITOR.tools.clone( updatedClasses );
+
+		while ( ( cl = classes.pop() ) ) {
+			if ( apply ) {
+				if ( !updatedClasses[ cl ] )
+					changed = updatedClasses[ cl ] = 1;
+			} else {
+				if ( updatedClasses[ cl ] ) {
+					delete updatedClasses[ cl ];
+					changed = 1;
+				}
+			}
+		}
+		if ( changed )
+			widget.setData( 'classes', updatedClasses );
+	}
 
 	function cancel( evt ) {
 		evt.cancel();
@@ -2559,6 +2820,14 @@
 		}, 100 ); // Use 100ms, so Chrome (@Mac) will be able to grab the content.
 	}
 
+	// Extracts classes array from style instance.
+	function getStyleClasses( style ) {
+		var attrs = style.getDefinition().attributes,
+			classes = attrs && attrs[ 'class' ];
+
+		return classes ? classes.split( /\s+/ ) : null;
+	}
+
 	// [IE] Force keeping focus because IE sometimes forgets to fire focus on main editable
 	// when blurring nested editable.
 	// @context widget
@@ -2590,12 +2859,41 @@
 		}
 	}
 
+	// Setup listener on widget#data which will update (remove/add) classes
+	// by comparing newly set classes with the old ones.
+	function setupDataClassesListener( widget ) {
+		// Note: previousClasses and newClasses may be null!
+		// Tip: for ( cl in null ) is correct.
+		var previousClasses = null;
+
+		widget.on( 'data', function() {
+			var newClasses = this.data.classes,
+				cl;
+
+			// When setting new classes one need to remember
+			// that he must break reference.
+			if ( previousClasses == newClasses )
+				return;
+
+			for ( cl in previousClasses ) {
+				// Avoid removing and adding classes again.
+				if ( !( newClasses && newClasses[ cl ] ) )
+					this.removeClass( cl );
+			}
+			for ( cl in newClasses )
+				this.addClass( cl );
+
+			previousClasses = newClasses;
+		} );
+	}
+
 	function setupDragHandler( widget ) {
 		if ( !widget.draggable )
 			return;
 
 		var editor = widget.editor,
-			container = widget.wrapper.findOne( '.cke_widget_drag_handler_container' ),
+			// Use getLast to find wrapper's direct descendant (#12022).
+			container = widget.wrapper.getLast( isDomDragHandlerContainer ),
 			img;
 
 		// Reuse drag handler if already exists (#11281).
@@ -2613,7 +2911,7 @@
 			img.setAttributes( {
 				'class': 'cke_reset cke_widget_drag_handler',
 				'data-cke-widget-drag-handler': '1',
-				src: transparentImageData,
+				src: CKEDITOR.tools.transparentImageData,
 				width: DRAG_HANDLER_SIZE,
 				title: editor.lang.widget.move,
 				height: DRAG_HANDLER_SIZE
@@ -2764,7 +3062,7 @@
 		if ( !img ) {
 			img = new CKEDITOR.dom.element( 'img', widget.editor.document );
 			img.setAttributes( {
-				src: transparentImageData,
+				src: CKEDITOR.tools.transparentImageData,
 				'class': 'cke_reset cke_widget_mask'
 			} );
 			widget.wrapper.append( img );
@@ -2796,6 +3094,7 @@
 		setupEditables( widget );
 		setupMask( widget );
 		setupDragHandler( widget );
+		setupDataClassesListener( widget );
 
 		// #11145: [IE8] Non-editable content of widget is draggable.
 		if ( CKEDITOR.env.ie && CKEDITOR.env.version < 9 ) {
@@ -2833,7 +3132,11 @@
 		// to overwrite this callback.
 
 		widget.on( 'doubleclick', function( evt ) {
-			widget.edit();
+			if ( widget.edit() ) {
+				// We have to cancel event if edit method opens a dialog, otherwise
+				// link plugin may open extra dialog (#12140).
+				evt.cancel();
+			}
 		} );
 
 		if ( widgetDef.data )
@@ -2847,9 +3150,13 @@
 		var widgetDataAttr = widget.element.data( 'cke-widget-data' );
 
 		if ( widgetDataAttr )
-			widget.setData( JSON.parse( widgetDataAttr ) );
+			widget.setData( JSON.parse( decodeURIComponent( widgetDataAttr ) ) );
 		if ( startupData )
 			widget.setData( startupData );
+
+		// Populate classes if they are not preset.
+		if ( !widget.data.classes )
+			widget.setData( 'classes', widget.getClasses() );
 
 		// Unblock data and...
 		widget.dataReady = true;
@@ -2868,8 +3175,187 @@
 	}
 
 	function writeDataToElement( widget ) {
-		widget.element.data( 'cke-widget-data', JSON.stringify( widget.data ) );
+		widget.element.data( 'cke-widget-data', encodeURIComponent( JSON.stringify( widget.data ) ) );
 	}
+
+	//
+	// WIDGET STYLE HANDLER ---------------------------------------------------
+	//
+
+	( function() {
+
+		/**
+		 * The class representing a widget style. It is an {@link CKEDITOR#STYLE_OBJECT object} like
+		 * the styles handler for widgets.
+		 *
+		 * **Note:** This custom style handler does not support all methods of the {@link CKEDITOR.style} class.
+		 * Not supported methods: {@link #applyToRange}, {@link #removeFromRange}, {@link #applyToObject}.
+		 *
+		 * @since 4.4
+		 * @class CKEDITOR.style.customHandlers.widget
+		 * @extends CKEDITOR.style
+		 */
+		CKEDITOR.style.addCustomHandler( {
+			type: 'widget',
+
+			setup: function( styleDefinition ) {
+				/**
+				 * The name of widget to which this style can be applied.
+				 * It is extracted from style definition's `widget` property.
+				 *
+				 * @property {String} widget
+				 */
+				this.widget = styleDefinition.widget;
+			},
+
+			apply: function( editor ) {
+				// Before CKEditor 4.4 wasn't a required argument, so we need to
+				// handle a case when it wasn't provided.
+				if ( !( editor instanceof CKEDITOR.editor ) )
+					return;
+
+				// Theoretically we could bypass checkApplicable, get widget from
+				// widgets.focused and check its name, what would be faster, but then
+				// this custom style would work differently than the default style
+				// which checks if it's applicable before applying or removeing itself.
+				if ( this.checkApplicable( editor.elementPath(), editor ) )
+					editor.widgets.focused.applyStyle( this );
+			},
+
+			remove: function( editor ) {
+				// Before CKEditor 4.4 wasn't a required argument, so we need to
+				// handle a case when it wasn't provided.
+				if ( !( editor instanceof CKEDITOR.editor ) )
+					return;
+
+				if ( this.checkApplicable( editor.elementPath(), editor ) )
+					editor.widgets.focused.removeStyle( this );
+			},
+
+			checkActive: function( elementPath, editor ) {
+				return this.checkElementMatch( elementPath.lastElement, 0, editor );
+			},
+
+			checkApplicable: function( elementPath, editor, filter ) {
+				// Before CKEditor 4.4 wasn't a required argument, so we need to
+				// handle a case when it wasn't provided.
+				if ( !( editor instanceof CKEDITOR.editor ) )
+					return false;
+
+				return this.checkElement( elementPath.lastElement, editor );
+			},
+
+			checkElementMatch: checkElementMatch,
+
+			checkElementRemovable: checkElementMatch,
+
+			/**
+			 * Checks if an element is a {@link CKEDITOR.plugins.widget#wrapper wrapper} of a
+			 * widget whose name matches the {@link #widget widget name} specified in the style definition.
+			 *
+			 * @param {CKEDITOR.dom.element} element
+			 * @param {CKEDITOR.editor} editor
+			 * @returns {Boolean}
+			 */
+			checkElement: function( element, editor ) {
+				if ( !isDomWidgetWrapper( element ) )
+					return false;
+
+				var widgetElement = element.getFirst( isDomWidgetElement );
+				return widgetElement && widgetElement.data( 'widget' ) == this.widget;
+			},
+
+			buildPreview: function( label ) {
+				return label || this._.definition.name;
+			},
+
+			/**
+			 * Returns allowed content rules which should be registered for this style.
+			 * Uses widget's {@link CKEDITOR.plugins.widget.definition#styleableElements} to make a rule
+			 * allowing classes on specified elements or use widget's
+			 * {@link CKEDITOR.plugins.widget.definition#styleToAllowedContentRules} method to transform a style
+			 * into allowed content rules.
+			 *
+			 * @param {CKEDITOR.editor} The editor instance.
+			 * @returns {CKEDITOR.filter.allowedContentRules}
+			 */
+			toAllowedContentRules: function( editor ) {
+				if ( !editor )
+					return null;
+
+				var widgetDef = editor.widgets.registered[ this.widget ],
+					classes,
+					rule = {};
+
+				if ( !widgetDef )
+					return null;
+
+				if ( widgetDef.styleableElements ) {
+					classes = this.getClassesArray();
+					if ( !classes )
+						return null;
+
+					rule[ widgetDef.styleableElements ] = {
+						classes: classes,
+						propertiesOnly: true
+					};
+					return rule;
+				}
+				if ( widgetDef.styleToAllowedContentRules )
+					return widgetDef.styleToAllowedContentRules( this );
+				return null;
+			},
+
+			/**
+			 * Returns classes defined in the style in form of an array.
+			 *
+			 * @returns {String[]}
+			 */
+			getClassesArray: function() {
+				var classes = this._.definition.attributes && this._.definition.attributes[ 'class' ];
+
+				return classes ? CKEDITOR.tools.trim( classes ).split( /\s+/ ) : null;
+			},
+
+			/**
+			 * Not implemented.
+			 *
+			 * @method applyToRange
+			 */
+			applyToRange: notImplemented,
+
+			/**
+			 * Not implemented.
+			 *
+			 * @method removeFromRange
+			 */
+			removeFromRange: notImplemented,
+
+			/**
+			 * Not implemented.
+			 *
+			 * @method applyToObject
+			 */
+			applyToObject: notImplemented
+		} );
+
+		function notImplemented() {}
+
+		// @context style
+		function checkElementMatch( element, fullMatch, editor ) {
+			// Before CKEditor 4.4 wasn't a required argument, so we need to
+			// handle a case when it wasn't provided.
+			if ( !editor )
+				return false;
+
+			if ( !this.checkElement( element, editor ) )
+				return false;
+
+			var widget = editor.widgets.getByElement( element, true );
+			return widget && widget.checkStyleActive( this );
+		}
+
+	} )();
 
 	//
 	// EXPOSE PUBLIC API ------------------------------------------------------
@@ -3140,6 +3626,77 @@
  * If set to `false` drag handler will not be displayed when hovering widget.
  *
  * @property {Boolean} draggable
+ */
+
+/**
+ * Names of element(s) (separated by spaces) for which the {@link CKEDITOR.filter} should allow classes
+ * defined in the widget styles. For example if your widget is upcasted from a simple `<div>`
+ * element, then in order to make it styleable you can set:
+ *
+ *		editor.widgets.add( 'customWidget', {
+ *			upcast: function( element ) {
+ *				return element.name == 'div';
+ *			},
+ *
+ *			// ...
+ *
+ *			styleableElements: 'div'
+ *		} );
+ *
+ * Then, when the following style is defined:
+ *
+ *		{
+ *			name: 'Thick border', type: 'widget', widget: 'customWidget',
+ *			attributes: { 'class': 'thickBorder' }
+ *		}
+ *
+ * a rule allowing the `thickBorder` class for `div` elements will be registered in the {@link CKEDITOR.filter}.
+ *
+ * If you need to have more freedom when transforming widget style to allowed content rules,
+ * you can use the {@link #styleToAllowedContentRules} callback.
+ *
+ * @since 4.4
+ * @property {String} styleableElements
+ */
+
+/**
+ * Function transforming custom widget's {@link CKEDITOR.style} instance into
+ * {@link CKEDITOR.filter.allowedContentRules}. It may be used when a static
+ * {@link #styleableElements} property is not enough to inform the {@link CKEDITOR.filter}
+ * what HTML features should be enabled when allowing the given style.
+ *
+ * In most cases, when style's classes just have to be added to element name(s) used by
+ * the widget element, it is recommended to use simpler {@link #styleableElements} property.
+ *
+ * In order to get parsed classes from the style definition you can use
+ * {@link CKEDITOR.style.customHandlers.widget#getClassesArray}.
+ *
+ * For example, if you want to use the [object format of allowed content rules](#!/guide/dev_allowed_content_rules-section-object-format),
+ * to specify `match` validator, your implementation could look like this:
+ *
+ *		editor.widgets.add( 'customWidget', {
+ *			// ...
+ *
+ *			styleToAllowedContentRules: funciton( style ) {
+ *				// Retrieve classes defined in the style.
+ *				var classes = style.getClassesArray();
+ *
+ *				// Do something crazy - for example return allowed content rules in object format,
+ *				// with custom match property and propertiesOnly flag.
+ *				return {
+ *					h1: {
+ *						match: isWidgetElement,
+ *						propertiesOnly: true,
+ *						classes: classes
+ *					}
+ *				};
+ *			}
+ *		} );
+ *
+ * @since 4.4
+ * @property {Function} styleToAllowedContentRules
+ * @param {CKEDITOR.style.customHandlers.widget} style The style to be transformed.
+ * @returns {CKEDITOR.filter.allowedContentRules}
  */
 
 /**

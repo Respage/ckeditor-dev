@@ -19,8 +19,8 @@
  */
 CKEDITOR.lang[ 'eo' ] = {
 	// ARIA description.
-	editor: 'Redaktilo por Riĉiga Teksto',
-	editorPanel: 'Rich Text Editor panel', // MISSING
+	editor: 'RiĉTeksta Redaktilo',
+	editorPanel: 'Panelo de la RiĉTeksta Redaktilo',
 
 	// Common messages and labels.
 	common: {
@@ -81,9 +81,11 @@ CKEDITOR.lang[ 'eo' ] = {
 		alignLeft: 'Maldekstre',
 		alignRight: 'Dekstre',
 		alignCenter: 'Centre',
+		alignJustify: 'Ĝisrandigi Ambaŭflanke',
 		alignTop: 'Supre',
 		alignMiddle: 'Centre',
 		alignBottom: 'Malsupre',
+		alignNone: 'None', // MISSING
 		invalidValue	: 'Nevalida Valoro',
 		invalidHeight: 'Alto devas esti nombro.',
 		invalidWidth: 'Larĝo devas esti nombro.',

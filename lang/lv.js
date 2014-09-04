@@ -81,9 +81,11 @@ CKEDITOR.lang[ 'lv' ] = {
 		alignLeft: 'Pa kreisi',
 		alignRight: 'Pa labi',
 		alignCenter: 'Centrēti',
+		alignJustify: 'Izlīdzināt malas',
 		alignTop: 'Augšā',
 		alignMiddle: 'Vertikāli centrēts',
 		alignBottom: 'Apakšā',
+		alignNone: 'None', // MISSING
 		invalidValue	: 'Nekorekta vērtība',
 		invalidHeight: 'Augstumam jābūt skaitlim.',
 		invalidWidth: 'Platumam jābūt skaitlim',

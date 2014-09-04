@@ -516,7 +516,7 @@
 								id: 'browse',
 								// v-align with the 'txtUrl' field.
 								// TODO: We need something better than a fixed size here.
-								style: 'display:inline-block;margin-top:10px;',
+								style: 'display:inline-block;margin-top:14px;',
 								align: 'center',
 								label: editor.lang.common.browseServer,
 								hidden: true,
@@ -586,7 +586,7 @@
 										commit: function( type, element, internalCommit ) {
 											var value = this.getValue();
 											if ( type == IMAGE ) {
-												if ( value )
+												if ( value && editor.activeFilter.check( 'img{width,height}' ) )
 													element.setStyle( 'width', CKEDITOR.tools.cssLength( value ) );
 												else
 													element.removeStyle( 'width' );
@@ -626,7 +626,7 @@
 										commit: function( type, element, internalCommit ) {
 											var value = this.getValue();
 											if ( type == IMAGE ) {
-												if ( value )
+												if ( value && editor.activeFilter.check( 'img{width,height}' ) )
 													element.setStyle( 'height', CKEDITOR.tools.cssLength( value ) );
 												else
 													element.removeStyle( 'height' );
@@ -963,7 +963,7 @@
 						commit: function( type, element ) {
 							if ( type == LINK ) {
 								if ( this.getValue() || this.isChanged() ) {
-									var url = decodeURI( this.getValue() );
+									var url = this.getValue();
 									element.data( 'cke-saved-href', url );
 									element.setAttribute( 'href', url );
 

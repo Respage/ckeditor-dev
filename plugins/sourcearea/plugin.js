@@ -4,17 +4,17 @@
  */
 
 /**
- * @fileOverview The "sourcearea" plugin. It registers the "source" editing
- *		mode, which displays the raw data being edited in the editor.
+ * @fileOverview The Source Editing Area plugin. It registers the "source" editing
+ *		mode, which displays raw  HTML data being edited in the editor.
  */
 
 ( function() {
 	CKEDITOR.plugins.add( 'sourcearea', {
-		lang: 'af,ar,bg,bn,bs,ca,cs,cy,da,de,el,en,en-au,en-ca,en-gb,eo,es,et,eu,fa,fi,fo,fr,fr-ca,gl,gu,he,hi,hr,hu,id,is,it,ja,ka,km,ko,ku,lt,lv,mk,mn,ms,nb,nl,no,pl,pt,pt-br,ro,ru,si,sk,sl,sq,sr,sr-latn,sv,th,tr,ug,uk,vi,zh,zh-cn', // %REMOVE_LINE_CORE%
+		lang: 'af,ar,bg,bn,bs,ca,cs,cy,da,de,el,en,en-au,en-ca,en-gb,eo,es,et,eu,fa,fi,fo,fr,fr-ca,gl,gu,he,hi,hr,hu,id,is,it,ja,ka,km,ko,ku,lt,lv,mk,mn,ms,nb,nl,no,pl,pt,pt-br,ro,ru,si,sk,sl,sq,sr,sr-latn,sv,th,tr,tt,ug,uk,vi,zh,zh-cn', // %REMOVE_LINE_CORE%
 		icons: 'source,source-rtl', // %REMOVE_LINE_CORE%
 		hidpi: true, // %REMOVE_LINE_CORE%
 		init: function( editor ) {
-			// Source mode isn't available in inline mode yet.
+			// Source mode in inline editors is only available through the "sourcedialog" plugin.
 			if ( editor.elementMode == CKEDITOR.ELEMENT_MODE_INLINE )
 				return;
 
@@ -77,7 +77,13 @@
 				editor.getCommand( 'source' ).setState( editor.mode == 'source' ? CKEDITOR.TRISTATE_ON : CKEDITOR.TRISTATE_OFF );
 			} );
 
+			var needsFocusHack = CKEDITOR.env.ie && CKEDITOR.env.version == 9;
+
 			function onResize() {
+				// We have to do something with focus on IE9, because if sourcearea had focus
+				// before being resized, the caret ends somewhere in the editor UI (#11839).
+				var wasActive = needsFocusHack && this.equals( CKEDITOR.document.getActive() );
+
 				// Holder rectange size is stretched by textarea,
 				// so hide it just for a moment.
 				this.hide();
@@ -85,6 +91,9 @@
 				this.setStyle( 'width', this.getParent().$.clientWidth + 'px' );
 				// When we have proper holder size, show textarea again.
 				this.show();
+
+				if ( wasActive )
+					this.focus();
 			}
 		}
 	} );
@@ -94,6 +103,7 @@
 		proto: {
 			setData: function( data ) {
 				this.setValue( data );
+				this.status = 'ready';
 				this.editor.fire( 'dataReady' );
 			},
 
@@ -139,14 +149,16 @@ CKEDITOR.plugins.sourcearea = {
 };
 
 /**
- * Controls CSS tab-size property of the sourcearea view.
+ * Controls the `tab-size` CSS property of the source editing area. Use it to set the width
+ * of the tab character in the source view. Enter an integer to denote the number of spaces
+ * that the tab will contain.
  *
  * **Note:** Works only with {@link #dataIndentationChars}
- * set to `'\t'`. Please consider that not all browsers support CSS
- * `tab-size` property yet.
+ * set to `'\t'`. Please consider that not all browsers support the `tab-size` CSS
+ * property yet.
  *
- *		// Set tab-size to 20 characters.
- *		CKEDITOR.config.sourceAreaTabSize = 20;
+ *		// Set tab-size to 10 characters.
+ *		config.sourceAreaTabSize = 10;
  *
  * @cfg {Number} [sourceAreaTabSize=4]
  * @member CKEDITOR.config

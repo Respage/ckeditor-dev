@@ -81,9 +81,11 @@ CKEDITOR.lang[ 'fo' ] = {
 		alignLeft: 'Vinstra',
 		alignRight: 'Høgra',
 		alignCenter: 'Miðsett',
+		alignJustify: 'Javnir tekstkantar',
 		alignTop: 'Ovast',
 		alignMiddle: 'Miðja',
 		alignBottom: 'Botnur',
+		alignNone: 'None', // MISSING
 		invalidValue	: 'Invalid value.', // MISSING
 		invalidHeight: 'Hædd má vera eitt tal.',
 		invalidWidth: 'Breidd má vera eitt tal.',

@@ -81,9 +81,11 @@ CKEDITOR.lang[ 'da' ] = {
 		alignLeft: 'Venstre',
 		alignRight: 'Højre',
 		alignCenter: 'Centreret',
+		alignJustify: 'Lige margener',
 		alignTop: 'Øverst',
 		alignMiddle: 'Centreret',
 		alignBottom: 'Nederst',
+		alignNone: 'None', // MISSING
 		invalidValue	: 'Invalid value.', // MISSING
 		invalidHeight: 'Højde skal være et tal.',
 		invalidWidth: 'Bredde skal være et tal.',

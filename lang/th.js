@@ -81,9 +81,11 @@ CKEDITOR.lang[ 'th' ] = {
 		alignLeft: 'ชิดซ้าย',
 		alignRight: 'ชิดขวา',
 		alignCenter: 'กึ่งกลาง',
+		alignJustify: 'நியாயப்படுத்தவும்',
 		alignTop: 'บนสุด',
 		alignMiddle: 'กึ่งกลางแนวตั้ง',
 		alignBottom: 'ชิดด้านล่าง',
+		alignNone: 'None', // MISSING
 		invalidValue	: 'ค่าไม่ถูกต้อง',
 		invalidHeight: 'ความสูงต้องเป็นตัวเลข',
 		invalidWidth: 'ความกว้างต้องเป็นตัวเลข',

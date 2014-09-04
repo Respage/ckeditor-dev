@@ -9,12 +9,13 @@ set -e
 echo "CKBuilder - Builds a release version of ckeditor-dev."
 echo ""
 
-CKBUILDER_VERSION="1.7.2"
+CKBUILDER_VERSION="2.0.1"
 CKBUILDER_URL="http://download.cksource.com/CKBuilder/$CKBUILDER_VERSION/ckbuilder.jar"
 
 PROGNAME=$(basename $0)
 MSG_UPDATE_FAILED="Warning: The attempt to update ckbuilder.jar failed. The existing file will be used."
 MSG_DOWNLOAD_FAILED="It was not possible to download ckbuilder.jar"
+ARGS=" $@ "
 
 function error_exit
 {
@@ -54,7 +55,24 @@ cd ../..
 echo ""
 echo "Starting CKBuilder..."
 
-java -jar ckbuilder/$CKBUILDER_VERSION/ckbuilder.jar --build ../../ ../../../../webroot/js/ckeditor-dist --version="4.3.5 DEV" --build-config build-config.js --overwrite --no-zip --no-tar "$@"
+JAVA_ARGS=${ARGS// -t / } # Remove -t from arrgs
+
+java -jar ckbuilder/$CKBUILDER_VERSION/ckbuilder.jar --build ../../ ../../../../webroot/js/ckeditor-dist --version="4.4.4 DEV" --overwrite $JAVA_ARGS
+
+# Copy and build tests
+if [[ "$ARGS" == *\ \-t\ * ]]; then
+	echo ""
+	echo "Coping tests..."
+
+	cp -r ../../tests release/ckeditor/tests
+	cp -r ../../package.json release/ckeditor/package.json
+	cp -r ../../bender.js release/ckeditor/bender.js
+
+	echo ""
+	echo "Installing tests..."
+
+	(cd release/ckeditor &&	npm install && bender init)
+fi
 
 echo ""
 echo "Release created in the \"release\" directory."

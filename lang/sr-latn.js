@@ -81,9 +81,11 @@ CKEDITOR.lang[ 'sr-latn' ] = {
 		alignLeft: 'Levo',
 		alignRight: 'Desno',
 		alignCenter: 'Sredina',
+		alignJustify: 'Obostrano ravnanje',
 		alignTop: 'Vrh',
 		alignMiddle: 'Sredina',
 		alignBottom: 'Dole',
+		alignNone: 'None', // MISSING
 		invalidValue	: 'Invalid value.', // MISSING
 		invalidHeight: 'Visina mora biti broj.',
 		invalidWidth: 'Širina mora biti broj.',

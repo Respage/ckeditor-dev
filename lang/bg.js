@@ -81,9 +81,11 @@ CKEDITOR.lang[ 'bg' ] = {
 		alignLeft: 'Ляво',
 		alignRight: 'Дясно',
 		alignCenter: 'Център',
+		alignJustify: 'Двустранно подравняване',
 		alignTop: 'Горе',
 		alignMiddle: 'По средата',
 		alignBottom: 'Долу',
+		alignNone: 'None', // MISSING
 		invalidValue	: 'Невалидна стойност.',
 		invalidHeight: 'Височината трябва да е число.',
 		invalidWidth: 'Ширина требе да е число.',

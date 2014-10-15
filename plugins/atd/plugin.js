@@ -82,11 +82,12 @@ function setupCKEditorInstance(editor, path) {
   /* I'd prefer hooking some sort of on "get" event to call removeWords, but this will have to do. Filters the AtD
    markup when returning the contents of the editor */
   var dataProcessor = editor.dataProcessor, htmlFilter = dataProcessor && dataProcessor.htmlFilter;
+  
   if (htmlFilter) {
     htmlFilter.addRules({
       elements: {
         span: function (element) {
-          if (atd_core.isMarkedNode(element.$)) {
+          if (atd_core.isMarkedNode(element)) {
             delete element.name;
             return element;
           }

@@ -478,7 +478,10 @@ AtDCore.prototype.isEmptySpan = function(node) {
 };
 
 AtDCore.prototype.isMarkedNode = function(node) {
-	return (this.hasClass(node, 'hiddenGrammarError') || this.hasClass(node, 'hiddenSpellError') || this.hasClass(node, 'hiddenSuggestion'));
+  if(typeof node.hasClass == "undefined") {
+    node = $(node);
+  }
+  return (node.hasClass('mceItemHidden') || node.hasClass('hiddenGrammarError') || node.hasClass('hiddenSpellError') || node.hasClass('hiddenSuggestion'));
 };
 
 /*

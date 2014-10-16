@@ -44,7 +44,7 @@ CKEDITOR.editorConfig = function( config ) {
         [
             { name: 'document', items : [ 'Source','-','Preview','Print','-','Templates' ] },
             { name: 'clipboard', items : [ 'Cut','Copy','Paste','PasteText','PasteFromWord','-','Undo','Redo' ] },
-            { name: 'editing', items : [ 'Find','Replace','-','SelectAll','-','SpellChecker', 'Scayt', 'atd' ] },
+            { name: 'editing', items : [ 'Find','Replace','-','SelectAll','-','SpellChecker', 'Scayt' ] },
             { name: 'basicstyles', items : [ 'Bold','Italic','Underline','RemoveFormat' ] },
             { name: 'paragraph', items : [ 'NumberedList','BulletedList','-','Outdent','Indent','-','Blockquote'] },
             { name: 'links', items : [ 'Link','Unlink'] },
@@ -62,7 +62,6 @@ CKEDITOR.editorConfig = function( config ) {
 	// %REMOVE_START%
 	config.plugins =
 		'about,' +
-    'atd,' +
 		'a11yhelp,' +
 		'basicstyles,' +
 		'bidi,' +

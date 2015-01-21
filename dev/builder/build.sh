@@ -54,7 +54,7 @@ cd ../..
 echo ""
 echo "Starting CKBuilder..."
 
-java -jar ckbuilder/$CKBUILDER_VERSION/ckbuilder.jar --build ../../ ../../../webroot/js/ckeditor-build --version="4.3.5 DEV" --build-config build-config.js --overwrite --no-zip --no-tar "$@"
+java -jar ckbuilder/$CKBUILDER_VERSION/ckbuilder.jar --build ../../ ../../../../app/webroot/js/ckeditor-build --version="4.3.5 DEV" --build-config build-config.js --overwrite --no-zip --no-tar "$@"
 
 echo ""
 echo "Release created in the \"release\" directory."
